@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 const validator = require("validator");
 const jwt = require("jsonwebtoken");
+const Show = require("./show");
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -37,6 +38,24 @@ const userSchema = new mongoose.Schema({
     ]
 });
 
+// Connect shows with a user
+userSchema.virtual("shows", {
+    ref: "Show",
+    localField: "_id",
+    foreignField: "owner"
+});
+
+// Hide private details of user
+userSchema.methods.toJSON = function() {
+    const user = this;
+    const userObject = user.toObject();
+
+    delete userObject.password;
+    delete userObject.tokens;
+
+    return userObject;
+};
+
 // Find user by credentials
 userSchema.statics.findByCredentials = async (email, password) => {
     const user = await User.findOne({ email });
@@ -64,6 +83,13 @@ userSchema.pre("save", async function(next) {
     if (this.isModified("password")) {
         this.password = await bcrypt.hash(this.password, 9);
     }
+    next();
+});
+
+// Delete users' shows when user is deleted
+userSchema.pre("remove", async function(next) {
+    const user = this;
+    await Show.deleteMany({ owner: user._id });
     next();
 });
 

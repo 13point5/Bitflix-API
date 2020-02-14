@@ -1,87 +1,96 @@
-const express = require('express')
-const Show = require('../models/show')
+const express = require("express");
+const Show = require("../models/show");
+const auth = require("../middleware/auth");
 
-const router = express.Router()
+const router = new express.Router();
 
 // Add a new show
-router.post('/new', async (req, res) => {
+router.post("/new", auth, async (req, res) => {
     try {
-        const show = new Show(req.body)
-        await show.save()
-        res.status(201).send(show)
+        const show = new Show({
+            ...req.body,
+            owner: req.user._id
+        });
+        await show.save();
+        res.status(201).send(show);
     } catch (error) {
-        res.status(400).send(error)
+        console.log(error);
+        res.status(400).send(error);
     }
-})
+});
 
 // Get all shows
-router.get('/all', async (req, res) => {
+router.get("/all", auth, async (req, res) => {
     try {
-        const shows = await Show.find({})
-        res.send(shows)
+        const shows = await Show.find({ owner: req.user._id });
+        res.send(shows);
     } catch (error) {
-        res.status(400).send(error)
+        res.status(500).send(error);
     }
-})
+});
 
 // Get show by id
-router.get('/:id', async (req, res) => {
+router.get("/:id", auth, async (req, res) => {
     try {
-        const show = await Show.findById(req.params.id)
+        const show = await Show.findOne({
+            _id: req.params.id,
+            owner: req.user._id
+        });
 
         if (!show) {
-            return res.status(404).send({'error': 'Show not found'})
+            return res.status(404).send({ error: "Show not found" });
         }
 
-        res.send(show)
+        res.send(show);
     } catch (error) {
-        res.status(400).send(error)
+        res.status(500).send(error);
     }
-})
+});
 
 // Update a show
-router.patch('/:id', async (req, res) => {
-    const updates = Object.keys(req.body)
-    const allowed = ['season', 'episode']
-    const isValid = updates.every((update) => {
-        return allowed.includes(update)
-    })
+router.patch("/:id", auth, async (req, res) => {
+    const updates = Object.keys(req.body);
+    const allowed = ["title", "season", "episode"];
+    const isValid = updates.every(update => allowed.includes(update));
 
     if (!isValid) {
-        return res.status(400).send({'error': 'Invalid update methods'})
+        return res.status(400).send({ error: "Invalid update methods" });
     }
 
     try {
-        const show = await Show.findById(req.params.id)
-        updates.forEach((update) => {
-            show[update] = req.body[update]
-        })
-        await show.save()
-        // const show = await Show.findByIdAndUpdate(req.params.id, req.body, {new: true, runValidators: true})
-        
+        const show = await Show.findOne({
+            _id: req.params.id,
+            owner: req.user._id
+        });
+
         if (!show) {
-            return res.status(404).send({'error': 'Show not found'})
+            return res.status(404).send({ error: "Show not found" });
         }
 
-        res.send(show)
+        updates.forEach(update => (show[update] = req.body[update]));
+        await show.save();
+        res.send(show);
     } catch (error) {
-        res.status(400).send(error)
+        res.status(400).send(error);
     }
-})
+});
 
 // Delete show by id
-router.delete('/:id', async (req, res) => {
+router.delete("/:id", async (req, res) => {
     try {
-        const show = await Show.findByIdAndDelete(req.params.id)
+        const show = await Show.findOneAndDelete({
+            _id: req.params.id,
+            owner: req.user._id
+        });
 
         if (!show) {
-            return res.status(404).send({'error': 'Show not found'})
+            return res.status(404).send({ error: "Show not found" });
         }
-        
-        res.send(show)
-    } catch (error) {
-        res.status(400).json(error)
-    }
-})
 
-module.exports = router
+        res.send(show);
+    } catch (error) {
+        res.status(400).json(error);
+    }
+});
+
+module.exports = router;

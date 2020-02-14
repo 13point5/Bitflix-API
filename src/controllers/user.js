@@ -2,7 +2,7 @@ const express = require("express");
 const auth = require("../middleware/auth");
 const User = require("../models/user");
 
-const router = express.Router();
+const router = new express.Router();
 
 // Sign up a new user
 router.post("/signUp", async (req, res) => {
@@ -12,6 +12,7 @@ router.post("/signUp", async (req, res) => {
         const token = await user.generateAuthToken();
         res.status(201).send({ user, token });
     } catch (error) {
+        console.error(error);
         res.status(400).send({ error: error.message });
     }
 });
@@ -26,11 +27,12 @@ router.post("/signIn", async (req, res) => {
         const token = await user.generateAuthToken();
         res.status(200).send({ user, token });
     } catch (error) {
+        console.error(error);
         res.status(400).send({ error: error.message });
     }
 });
 
-// Get user by id
+// Get user
 router.get("/me", auth, async (req, res) => {
     res.send(req.user);
 });
@@ -56,22 +58,17 @@ router.patch("/me", auth, async (req, res) => {
         await user.save();
         res.send(user);
     } catch (error) {
-        res.status(400).send({ error: error.message });
+        res.status(500).send({ error: error.message });
     }
 });
 
 // Delete user by id
-router.delete("/me", async (req, res) => {
+router.delete("/me", auth, async (req, res) => {
     try {
-        const user = await User.findByIdAndDelete(req.params.id);
-
-        if (!user) {
-            return res.status(404).send({ error: "User not found" });
-        }
-
-        res.send(user);
+        await req.user.remove();
+        res.send(req.user);
     } catch (error) {
-        res.status(400).json(error);
+        res.status(500).json(error);
     }
 });
 
