@@ -3,7 +3,11 @@ const User = require("../models/user");
 
 const auth = async (req, res, next) => {
     try {
-        const token = req.header("Authorization").replace("Bearer ", "");
+        let token = req.header("Authorization");
+        if (!token) {
+            token = req.body.headers.Authorization;
+        }
+        token = token.replace("Bearer ", "");
         const decoded = jwt.verify(token, "coolproject");
         const user = await User.findOne({
             _id: decoded._id,
@@ -19,7 +23,7 @@ const auth = async (req, res, next) => {
         next();
     } catch (e) {
         console.log(req.body);
-        console.log(req.header);
+        console.log(req.header("Authorization"));
         console.log(e);
         res.status(401).send({ error: "Please authenticate." });
     }

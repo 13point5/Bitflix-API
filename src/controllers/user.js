@@ -32,6 +32,31 @@ router.post("/signIn", async (req, res) => {
     }
 });
 
+// Logout from current device
+router.post("/signOut", auth, async (req, res) => {
+    try {
+        req.user.tokens = req.user.tokens.filter(token => {
+            return token.token !== req.token;
+        });
+        await req.user.save();
+
+        res.send();
+    } catch (e) {
+        res.status(500).send();
+    }
+});
+
+// Logout from all devices
+router.post("/signOutAll", auth, async (req, res) => {
+    try {
+        req.user.tokens = [];
+        await req.user.save();
+        res.send();
+    } catch (e) {
+        res.status(500).send();
+    }
+});
+
 // Get user
 router.get("/me", auth, async (req, res) => {
     res.send(req.user);

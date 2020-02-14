@@ -50,7 +50,7 @@ router.get("/:id", auth, async (req, res) => {
 // Update a show
 router.patch("/:id", auth, async (req, res) => {
     const updates = Object.keys(req.body);
-    const allowed = ["title", "season", "episode"];
+    const allowed = ["season", "episode"];
     const isValid = updates.every(update => allowed.includes(update));
 
     if (!isValid) {
@@ -76,7 +76,7 @@ router.patch("/:id", auth, async (req, res) => {
 });
 
 // Delete show by id
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", auth, async (req, res) => {
     try {
         const show = await Show.findOneAndDelete({
             _id: req.params.id,

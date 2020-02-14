@@ -19,6 +19,8 @@ const showSchema = new mongoose.Schema({
     }
 });
 
+showSchema.index({ title: 1, owner: 1 }, { unique: true });
+
 const Show = mongoose.model("Show", showSchema);
 
 module.exports = Show;
