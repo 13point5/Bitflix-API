@@ -1,8 +1,11 @@
-require("./database/db");
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const userController = require("./controllers/user");
 const showController = require("./controllers/show");
+
+require("./database/db");
 
 const app = express();
 const port = process.env.PORT || 3000;

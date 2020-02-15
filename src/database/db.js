@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
-
-const mongoURL = process.env.MONGODB_URL;
+const mongoURL =
+    process.env.MONGODB_URL || "mongodb://127.0.0.1:27017/bitflix-api";
 
 try {
     mongoose.connect(mongoURL, {
